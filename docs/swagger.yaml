@@ -1,0 +1,732 @@
+basePath: /api/v1
+definitions:
+  Category:
+    description: Metadata used to organize and filter subscriptions
+    properties:
+      created_at:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      created_by:
+        format: uuid
+        type: string
+      id:
+        format: uuid
+        type: string
+      name:
+        example: Cloud
+        type: string
+      updated_at:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      updated_by:
+        format: uuid
+        type: string
+    type: object
+  Category_DTO:
+    properties:
+      name:
+        example: Cloud
+        type: string
+    required:
+    - name
+    type: object
+  Login:
+    properties:
+      email:
+        example: xyz@gmail.com
+        format: email
+        type: string
+      password:
+        format: password
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  Subscription:
+    description: Detailed information about a user's subscription
+    properties:
+      billing_cycle:
+        example: monthly
+        type: string
+      category_id:
+        format: uuid
+        type: string
+      created_at:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      id:
+        format: uuid
+        type: string
+      monthly_cost:
+        example: 15.99
+        format: float
+        type: number
+      next_billing_date:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      service_name:
+        example: Catalog service
+        type: string
+      status:
+        example: active
+        type: string
+      trial_end_date:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      updated_at:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      user_id:
+        format: uuid
+        type: string
+    type: object
+  Subscription_DTO:
+    properties:
+      billing_cycle:
+        example: monthly
+        type: string
+      category_id:
+        format: uuid
+        type: string
+      monthly_cost:
+        example: 15.99
+        format: float
+        type: number
+      next_billing_date:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      service_name:
+        example: Catalog service
+        type: string
+      trial_end_date:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+    required:
+    - category_id
+    - monthly_cost
+    - next_billing_date
+    - service_name
+    type: object
+  Update_Subscription_Status:
+    properties:
+      status:
+        example: active
+        type: string
+    type: object
+  Update_User_Password:
+    properties:
+      new_password:
+        format: password
+        type: string
+      old_password:
+        format: password
+        type: string
+    type: object
+  Update_User_Profile:
+    properties:
+      currency:
+        example: INR
+        type: string
+      email:
+        example: xyz@gmail.com
+        format: email
+        type: string
+    type: object
+  User:
+    description: Detailed information about a user's profile
+    properties:
+      created_at:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+      currency:
+        example: INR
+        type: string
+      email:
+        example: xyz@gmail.com
+        format: email
+        type: string
+      id:
+        format: uuid
+        type: string
+      role:
+        example: admin
+        type: string
+      updated_at:
+        example: "2026-03-09T12:00:00Z"
+        format: date-time
+        type: string
+    type: object
+  User_DTO:
+    properties:
+      currency:
+        example: INR
+        type: string
+      email:
+        example: xyz@gmail.com
+        format: email
+        type: string
+      password:
+        format: password
+        type: string
+    required:
+    - email
+    - password
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: ayan25844@gmail.com
+    name: Ayan Chatterjee
+    url: https://github.com/Ayan25844
+  description: |-
+    A high-performance subscription tracking service built with Go and PostgreSQL.
+    This API handles user authentication, subscription lifecycle management, and expense analytics.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: SubScout Management API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Public route to log in the user
+      parameters:
+      - description: New Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Login'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Token created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Invalid email or password'
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Create a new login
+      tags:
+      - Public Routes
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Public route to create a user account
+      parameters:
+      - description: New Account
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/User_DTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User account created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "409":
+          description: Email id already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Register a new user account
+      tags:
+      - Public Routes
+  /categories:
+    get:
+      description: User route to get a list of all categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of categories retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/Category'
+            type: array
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "404":
+          description: No categories found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Get the list of all categories
+      tags:
+      - User Routes
+    post:
+      consumes:
+      - application/json
+      description: Admin route to create a unique subscription category
+      parameters:
+      - description: Category Name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Category_DTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category created successfully
+          schema:
+            $ref: '#/definitions/Category'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "403":
+          description: Forbidden - Insufficient Permissions
+          schema:
+            type: string
+        "409":
+          description: Category already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Create a new category
+      tags:
+      - Admin Routes
+  /categories/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Admin route to rename a category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Renamed category
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Category_DTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category updated successfully
+          schema:
+            $ref: '#/definitions/Category'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "403":
+          description: 'Forbidden: Insufficient Permissions'
+          schema:
+            type: string
+        "404":
+          description: Category not found
+          schema:
+            type: string
+        "409":
+          description: Category already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Update the name of a category
+      tags:
+      - Admin Routes
+  /subscriptions:
+    get:
+      description: User route to get a list of all subscriptions for the logged in
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of subscriptions retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/Subscription'
+            type: array
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "404":
+          description: No subscriptions found for this user
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Get a list of all subscriptions
+      tags:
+      - User Routes
+    post:
+      consumes:
+      - application/json
+      description: User route to create a unique subscription for the logged in user
+      parameters:
+      - description: New subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Subscription_DTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Subscription created successfully
+          schema:
+            $ref: '#/definitions/Subscription'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "409":
+          description: Subscription already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Create a new subscription
+      tags:
+      - User Routes
+  /subscriptions/{categoryID}:
+    get:
+      description: User route to get a list of all subscriptions for the logged-in
+        user
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of Subscriptions retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/Subscription'
+            type: array
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "404":
+          description: No subscriptions found for this user
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Get a list of subscriptions based on category id
+      tags:
+      - User Routes
+  /subscriptions/{id}:
+    delete:
+      description: User route to delete a subscription for the logged-in user
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "404":
+          description: No subscription found for this user
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Delete a subscription based on its id
+      tags:
+      - User Routes
+    put:
+      consumes:
+      - application/json
+      description: User route to update a subscription for the logged in user
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Subscription_DTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription updated successfully
+          schema:
+            $ref: '#/definitions/Subscription'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "404":
+          description: No subscription found for this user
+          schema:
+            type: string
+        "409":
+          description: Subscription already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Update an existing subscription
+      tags:
+      - User Routes
+  /subscriptions/status/{id}:
+    put:
+      consumes:
+      - application/json
+      description: User route to update a subscription status for the logged in user
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated subscription status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Update_Subscription_Status'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription updated successfully
+          schema:
+            $ref: '#/definitions/Subscription'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "404":
+          description: No subscription found for this user
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Update an existing subscription status
+      tags:
+      - User Routes
+  /users/me:
+    put:
+      consumes:
+      - application/json
+      description: User route to update a user profile
+      parameters:
+      - description: Updated user profile
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Update_User_Profile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile updated successfully
+          schema:
+            $ref: '#/definitions/User'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "409":
+          description: Email id already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Update the profile of a user
+      tags:
+      - User Routes
+  /users/me/delete:
+    delete:
+      description: User route to delete a user account for the logged-in user
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Delete a user account
+      tags:
+      - User Routes
+  /users/me/password:
+    put:
+      consumes:
+      - application/json
+      description: User route to update a user password
+      parameters:
+      - description: Updated user password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Update_User_Password'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User password updated successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "409":
+          description: Password already exists
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - Bearer: []
+      summary: Update the password of a user
+      tags:
+      - User Routes
+securityDefinitions:
+  Bearer:
+    description: |-
+      JWT Authorization header using the Bearer scheme.
+      Example: "Authorization: Bearer {token}"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
