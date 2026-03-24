@@ -229,9 +229,7 @@ paths:
           description: Internal server error
           schema:
             type: string
-      security:
-      - Bearer: []
-      summary: Create a new login
+      summary: Create a new user login
       tags:
       - Public Routes
   /auth/register:
@@ -265,8 +263,6 @@ paths:
           description: Internal server error
           schema:
             type: string
-      security:
-      - Bearer: []
       summary: Register a new user account
       tags:
       - Public Routes

@@ -26,11 +26,6 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
                 "description": "Public route to log in the user",
                 "consumes": [
                     "application/json"
@@ -41,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "Public Routes"
                 ],
-                "summary": "Create a new login",
+                "summary": "Create a new user login",
                 "parameters": [
                     {
                         "description": "New Login",
@@ -83,11 +78,6 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
                 "description": "Public route to create a user account",
                 "consumes": [
                     "application/json"

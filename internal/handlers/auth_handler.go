@@ -24,7 +24,6 @@ type AuthHandler struct {
 
 // @Accept json
 // @Produce json
-// @Security Bearer
 // @Tags Public Routes
 // @Router /auth/register [post]
 // @Summary Register a new user account
@@ -82,10 +81,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 // @Accept json
 // @Produce json
-// @Security Bearer
 // @Tags Public Routes
 // @Router /auth/login [post]
-// @Summary Create a new login
+// @Summary Create a new user login
 // @Failure 400 {string} string "Invalid input"
 // @Description Public route to log in the user
 // @Param request body dto.Login true "New Login"
@@ -94,7 +92,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {string} string "Unauthorized: Invalid email or password"
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.Login
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -111,8 +109,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	query := `SELECT id, password_hash, role FROM users WHERE email = $1`
-	err := h.DB.Pool.QueryRow(ctx, query, req.Email).Scan(&id, &dbHash, &role)
-	if err != nil {
+	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Email).Scan(&id, &dbHash, &role)
+	if errQuery != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
@@ -120,13 +118,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
-	token, err := auth.GenerateToken(id, role)
-	if err != nil {
+	token, errToken := auth.GenerateToken(id, role)
+	if errToken != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	json.NewEncoder(w).Encode(map[string]string{"Token created successfully": token})
 }
 
 // @Security Bearer
