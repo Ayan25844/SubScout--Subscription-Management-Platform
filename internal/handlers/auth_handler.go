@@ -127,31 +127,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"Token created successfully": token})
 }
 
-// @Security Bearer
-// @Tags User Routes
-// @Success 204 "No Content"
-// @Summary Delete a user account
-// @Router /users/me/delete [delete]
-// @Failure 500 {string} string "Internal server error"
-// @Failure 401 {string} string "Unauthorized: Missing token"
-// @Description User route to delete a user account for the logged-in user
-func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	query := `DELETE FROM users WHERE id = $1`
-	commandTag, err := h.DB.Pool.Exec(ctx, query, claims.UserID)
-	if commandTag.RowsAffected() == 0 {
-		http.Error(w, "No user account found", http.StatusNotFound)
-		return
-	}
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
 // @Accept json
 // @Produce json
 // @Security Bearer
@@ -256,4 +231,30 @@ func (h *AuthHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "User Password updated successfully"})
+}
+
+// @Security Bearer
+// @Tags User Routes
+// @Success 204 "No Content"
+// @Summary Delete a user account
+// @Router /users/me/delete [delete]
+// @Failure 500 {string} string "Internal server error"
+// @Failure 400 {string} string "No user account found"
+// @Failure 401 {string} string "Unauthorized: Missing token"
+// @Description User route to delete a user account for the logged-in user
+func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	query := `DELETE FROM users WHERE id = $1`
+	commandTag, errQuery := h.DB.Pool.Exec(ctx, query, claims.UserID)
+	if commandTag.RowsAffected() == 0 {
+		http.Error(w, "No user account found", http.StatusNotFound)
+		return
+	}
+	if errQuery != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
