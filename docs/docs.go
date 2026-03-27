@@ -50,7 +50,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Token created successfully",
+                        "description": "Login successful",
                         "schema": {
                             "type": "string"
                         }
