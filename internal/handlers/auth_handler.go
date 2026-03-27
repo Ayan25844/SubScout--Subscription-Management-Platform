@@ -87,8 +87,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Invalid input"
 // @Description Public route to log in the user
 // @Param request body dto.Login true "New Login"
+// @Success 201 {string} string "Login successful"
 // @Failure 500 {string} string "Internal server error"
-// @Success 201 {string} string "Token created successfully"
 // @Failure 401 {string} string "Unauthorized: Invalid email or password"
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.Login
@@ -124,7 +124,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"Token created successfully": token})
+	json.NewEncoder(w).Encode(map[string]string{
+		"token":   token,
+		"message": "Login successful",
+	})
 }
 
 // @Accept json
