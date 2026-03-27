@@ -146,7 +146,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
 	var req dto.Update_User_Profile
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -163,16 +163,14 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	query := `
 		UPDATE users 
-		SET currency = COALESCE($1, currency),
-		email = COALESCE($2, email),
-		updated_at = CURRENT_TIMESTAMP
+		SET currency = COALESCE($1, currency), email = COALESCE($2, email), updated_at = CURRENT_TIMESTAMP
 		WHERE id = $3
 		RETURNING id, role, currency, email, created_at, updated_at`
-	err := h.DB.Pool.QueryRow(ctx, query, req.Currency, req.Email, claims.UserID).
+	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Currency, req.Email, claims.UserID).
 		Scan(&profile.ID, &profile.Role, &profile.Currency, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt)
-	if err != nil {
+	if errQuery != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if errors.As(errQuery, &pgErr) {
 			if pgErr.Code == "23505" {
 				http.Error(w, "Email ID already exists", http.StatusConflict)
 				return
