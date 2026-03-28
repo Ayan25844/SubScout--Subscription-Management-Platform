@@ -45,6 +45,7 @@ func RegisterRoutes(db *database.Service) http.Handler {
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware)
 			r.Get("/categories", subHandler.GetCategories)
+			r.Get("/currencies", authHandler.GetCurrencies)
 			r.Put("/users/me", authHandler.UpdateProfile)
 			r.Put("/users/me/password", authHandler.UpdatePassword)
 			r.Delete("/users/me/delete", authHandler.DeleteAccount)

@@ -323,6 +323,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/currencies": {
+            "get": {
+                "description": "Currency route to get a list of all currencies",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Currency Routes"
+                ],
+                "summary": "Get the list of all currencies",
+                "responses": {
+                    "200": {
+                        "description": "List of currencies retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Currency"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No currencies found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/subscriptions": {
             "get": {
                 "security": [
@@ -884,6 +919,20 @@ const docTemplate = `{
                 }
             }
         },
+        "Currency": {
+            "description": "Currency information used for subscription billing",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "INR"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        },
         "Login": {
             "type": "object",
             "required": [
@@ -1020,9 +1069,9 @@ const docTemplate = `{
         "Update_User_Profile": {
             "type": "object",
             "properties": {
-                "currency": {
+                "currency_id": {
                     "type": "string",
-                    "example": "INR"
+                    "format": "uuid"
                 },
                 "email": {
                     "type": "string",
@@ -1040,9 +1089,9 @@ const docTemplate = `{
                     "format": "date-time",
                     "example": "2026-03-09T12:00:00Z"
                 },
-                "currency": {
+                "currency_id": {
                     "type": "string",
-                    "example": "INR"
+                    "format": "uuid"
                 },
                 "email": {
                     "type": "string",
@@ -1071,9 +1120,9 @@ const docTemplate = `{
                 "password"
             ],
             "properties": {
-                "currency": {
+                "currency_id": {
                     "type": "string",
-                    "example": "INR"
+                    "format": "uuid"
                 },
                 "email": {
                     "type": "string",
