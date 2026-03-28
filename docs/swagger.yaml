@@ -304,7 +304,7 @@ paths:
       - Bearer: []
       summary: Get the list of all categories
       tags:
-      - Category Routes
+      - User Routes
     post:
       consumes:
       - application/json
@@ -739,10 +739,6 @@ paths:
             type: string
         "401":
           description: 'Unauthorized: Missing token'
-          schema:
-            type: string
-        "409":
-          description: Password already exists
           schema:
             type: string
         "500":

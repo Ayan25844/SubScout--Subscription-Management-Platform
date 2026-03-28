@@ -140,7 +140,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Category Routes"
+                    "User Routes"
                 ],
                 "summary": "Get the list of all categories",
                 "responses": {
@@ -854,12 +854,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized: Missing token",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "409": {
-                        "description": "Password already exists",
                         "schema": {
                             "type": "string"
                         }

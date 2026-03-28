@@ -425,7 +425,7 @@ func (h *SubscriptionHandler) CreateCategory(w http.ResponseWriter, r *http.Requ
 
 // @Produce json
 // @Security Bearer
-// @Tags Category Routes
+// @Tags User Routes
 // @Router /categories [get]
 // @Summary Get the list of all categories
 // @Failure 404 {string} string "No categories found"
