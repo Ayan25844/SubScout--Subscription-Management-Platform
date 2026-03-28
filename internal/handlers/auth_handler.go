@@ -22,6 +22,41 @@ type AuthHandler struct {
 	DB *database.Service
 }
 
+// @Produce json
+// @Tags Currency Routes
+// @Router /currencies [get]
+// @Summary Get the list of all currencies
+// @Failure 404 {string} string "No currencies found"
+// @Failure 500 {string} string "Internal server error"
+// @Description Currency route to get a list of all currencies
+// @Success 200 {array} models.Currency "List of currencies retrieved successfully"
+func (h *AuthHandler) GetCurrencies(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	query := `SELECT * FROM currencies`
+	rows, errQuery := h.DB.Pool.Query(ctx, query)
+	if errQuery != nil || rows.Err() != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	var currencies []models.Currency
+	for rows.Next() {
+		var c models.Currency
+		if errScan := rows.Scan(&c.ID, &c.Code); errScan != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		currencies = append(currencies, c)
+	}
+	if len(currencies) == 0 {
+		http.Error(w, "No currencies found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(currencies)
+}
+
 // @Accept json
 // @Produce json
 // @Tags Public Routes
@@ -43,8 +78,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errEmail, http.StatusBadRequest)
 		return
 	}
-	if errCurr := validator.ValidateRequiredString(req.Currency, "Currency", true); errCurr != "" {
-		http.Error(w, errCurr, http.StatusBadRequest)
+	if errCurrID := validator.ValidateRequiredUUID(req.CurrencyID, "Currency ID", true); errCurrID != "" {
+		http.Error(w, errCurrID, http.StatusBadRequest)
 		return
 	}
 	if errPass := validator.ValidatePassword(nil, req.Password, false); errPass != "" {
@@ -58,12 +93,14 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
+	var errQuery error
 	var user models.User
-	query := `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, currency, role, created_at, updated_at`
-	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Email, hashedPassword).Scan(&user.ID, &user.Email, &user.Currency, &user.Role, &user.CreatedAt, &user.UpdatedAt)
-	if req.Currency != nil {
-		query := `UPDATE users SET currency = $1 WHERE id = $2 RETURNING currency`
-		errQuery = h.DB.Pool.QueryRow(ctx, query, req.Currency, user.ID).Scan(&user.Currency)
+	if req.CurrencyID != nil {
+		query := `INSERT INTO users (email, password_hash, currency_id) VALUES ($1, $2, $3) RETURNING id, email, currency_id, role, created_at, updated_at`
+		errQuery = h.DB.Pool.QueryRow(ctx, query, req.Email, hashedPassword, req.CurrencyID).Scan(&user.ID, &user.Email, &user.CurrencyID, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	} else {
+		query := `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, currency_id, role, created_at, updated_at`
+		errQuery = h.DB.Pool.QueryRow(ctx, query, req.Email, hashedPassword).Scan(&user.ID, &user.Email, &user.CurrencyID, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	}
 	if errQuery != nil {
 		var pgErr *pgconn.PgError
@@ -111,7 +148,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT id, password_hash, role FROM users WHERE email = $1`
 	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Email).Scan(&id, &dbHash, &role)
 	if errQuery != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	if !auth.CheckPasswordHash(*req.Password, dbHash) {
@@ -154,8 +191,8 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errEmail, http.StatusBadRequest)
 		return
 	}
-	if errCurr := validator.ValidateRequiredString(req.Currency, "Currency", true); errCurr != "" {
-		http.Error(w, errCurr, http.StatusBadRequest)
+	if errCurrID := validator.ValidateRequiredUUID(req.CurrencyID, "Currency ID", true); errCurrID != "" {
+		http.Error(w, errCurrID, http.StatusBadRequest)
 		return
 	}
 	var profile models.User
@@ -163,11 +200,11 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	query := `
 		UPDATE users 
-		SET currency = COALESCE($1, currency), email = COALESCE($2, email), updated_at = CURRENT_TIMESTAMP
+		SET currency_id = COALESCE($1, currency_id), email = COALESCE($2, email), updated_at = CURRENT_TIMESTAMP
 		WHERE id = $3
-		RETURNING id, role, currency, email, created_at, updated_at`
-	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Currency, req.Email, claims.UserID).
-		Scan(&profile.ID, &profile.Role, &profile.Currency, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt)
+		RETURNING id, role, currency_id, email, created_at, updated_at`
+	errQuery := h.DB.Pool.QueryRow(ctx, query, req.CurrencyID, req.Email, claims.UserID).
+		Scan(&profile.ID, &profile.Role, &profile.CurrencyID, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt)
 	if errQuery != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(errQuery, &pgErr) {
@@ -249,12 +286,12 @@ func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	query := `DELETE FROM users WHERE id = $1`
 	commandTag, errQuery := h.DB.Pool.Exec(ctx, query, claims.UserID)
-	if commandTag.RowsAffected() == 0 {
-		http.Error(w, "No user account found", http.StatusNotFound)
-		return
-	}
 	if errQuery != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if commandTag.RowsAffected() == 0 {
+		http.Error(w, "No user account found", http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

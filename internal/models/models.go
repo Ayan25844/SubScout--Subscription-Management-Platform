@@ -8,12 +8,12 @@ import (
 
 // @Description Detailed information about a user's profile
 type User struct {
-	ID        uuid.UUID `json:"id" swaggertype:"string" format:"uuid"`
-	Role      string    `json:"role" swaggertype:"string" example:"admin"`
-	Currency  string    `json:"currency" swaggertype:"string" example:"INR"`
-	Email     string    `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com"`
-	CreatedAt time.Time `json:"created_at" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
-	UpdatedAt time.Time `json:"updated_at" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
+	ID         uuid.UUID `json:"id" swaggertype:"string" format:"uuid"`
+	Role       string    `json:"role" swaggertype:"string" example:"admin"`
+	CurrencyID uuid.UUID `json:"currency_id" swaggertype:"string" format:"uuid"`
+	Email      string    `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com"`
+	CreatedAt  time.Time `json:"created_at" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
+	UpdatedAt  time.Time `json:"updated_at" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
 }
 
 // @Description Metadata used to organize and filter subscriptions
@@ -24,6 +24,12 @@ type Category struct {
 	UpdatedBy uuid.UUID `json:"updated_by" swaggertype:"string" format:"uuid"`
 	CreatedAt time.Time `json:"created_at" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
 	UpdatedAt time.Time `json:"updated_at" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
+}
+
+// @Description Currency information used for subscription billing
+type Currency struct {
+	ID   uuid.UUID `json:"id" swaggertype:"string" format:"uuid"`
+	Code string    `json:"code" swaggertype:"string" example:"INR"`
 }
 
 // @Description Detailed information about a user's subscription

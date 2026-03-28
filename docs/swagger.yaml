@@ -32,6 +32,16 @@ definitions:
     required:
     - name
     type: object
+  Currency:
+    description: Currency information used for subscription billing
+    properties:
+      code:
+        example: INR
+        type: string
+      id:
+        format: uuid
+        type: string
+    type: object
   Login:
     properties:
       email:
@@ -133,8 +143,8 @@ definitions:
     type: object
   Update_User_Profile:
     properties:
-      currency:
-        example: INR
+      currency_id:
+        format: uuid
         type: string
       email:
         example: xyz@gmail.com
@@ -148,8 +158,8 @@ definitions:
         example: "2026-03-09T12:00:00Z"
         format: date-time
         type: string
-      currency:
-        example: INR
+      currency_id:
+        format: uuid
         type: string
       email:
         example: xyz@gmail.com
@@ -168,8 +178,8 @@ definitions:
     type: object
   User_DTO:
     properties:
-      currency:
-        example: INR
+      currency_id:
+        format: uuid
         type: string
       email:
         example: xyz@gmail.com
@@ -391,6 +401,29 @@ paths:
       summary: Update the name of a category
       tags:
       - Admin Routes
+  /currencies:
+    get:
+      description: Currency route to get a list of all currencies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of currencies retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/Currency'
+            type: array
+        "404":
+          description: No currencies found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get the list of all currencies
+      tags:
+      - Currency Routes
   /subscriptions:
     get:
       description: User route to get a list of all subscriptions for the logged in

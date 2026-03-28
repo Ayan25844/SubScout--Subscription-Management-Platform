@@ -7,9 +7,9 @@ import (
 )
 
 type User_DTO struct {
-	Currency *string `json:"currency" swaggertype:"string" example:"INR"`
-	Password *string `json:"password" swaggertype:"string" format:"password" validate:"required"`
-	Email    *string `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com" validate:"required"`
+	CurrencyID *uuid.UUID `json:"currency_id" swaggertype:"string" format:"uuid"`
+	Password   *string    `json:"password" swaggertype:"string" format:"password" validate:"required"`
+	Email      *string    `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com" validate:"required"`
 }
 
 type Login struct {
@@ -35,8 +35,8 @@ type Update_Subscription_Status struct {
 }
 
 type Update_User_Profile struct {
-	Currency *string `json:"currency" swaggertype:"string" example:"INR"`
-	Email    *string `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com"`
+	CurrencyID *uuid.UUID `json:"currency_id" swaggertype:"string" format:"uuid"`
+	Email      *string    `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com"`
 }
 
 type Update_User_Password struct {
