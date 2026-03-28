@@ -229,14 +229,13 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Invalid input"
 // @Description User route to update a user password
 // @Failure 500 {string} string "Internal server error"
-// @Failure 409 {string} string "Password already exists"
 // @Failure 401 {string} string "Unauthorized: Missing token"
 // @Success 200 {string} string "User password updated successfully"
 // @Param request body dto.Update_User_Password true "Updated user password"
 func (h *AuthHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
 	var req dto.Update_User_Password
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -247,23 +246,23 @@ func (h *AuthHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	var currentHash string
-	err := h.DB.Pool.QueryRow(ctx, "SELECT password_hash FROM users WHERE id = $1", claims.UserID).Scan(&currentHash)
-	if err != nil {
+	errQuery := h.DB.Pool.QueryRow(ctx, "SELECT password_hash FROM users WHERE id = $1", claims.UserID).Scan(&currentHash)
+	if errQuery != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(currentHash), []byte(*req.OldPassword)); err != nil {
+	if errCompare := bcrypt.CompareHashAndPassword([]byte(currentHash), []byte(*req.OldPassword)); errCompare != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	newHash, err := bcrypt.GenerateFromPassword([]byte(*req.NewPassword), bcrypt.DefaultCost)
-	if err != nil {
+	newHash, errHash := bcrypt.GenerateFromPassword([]byte(*req.NewPassword), bcrypt.DefaultCost)
+	if errHash != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	_, err = h.DB.Pool.Exec(ctx, "UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+	_, errQuery = h.DB.Pool.Exec(ctx, "UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
 		newHash, claims.UserID)
-	if err != nil {
+	if errQuery != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
