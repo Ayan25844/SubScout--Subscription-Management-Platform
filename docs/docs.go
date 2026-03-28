@@ -140,7 +140,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User Routes"
+                    "Category Routes"
                 ],
                 "summary": "Get the list of all categories",
                 "responses": {
@@ -335,7 +335,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User Routes"
+                    "Subscription Routes"
                 ],
                 "summary": "Get a list of all subscriptions",
                 "responses": {
@@ -382,7 +382,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User Routes"
+                    "Subscription Routes"
                 ],
                 "summary": "Create a new subscription",
                 "parameters": [
@@ -445,7 +445,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User Routes"
+                    "Subscription Routes"
                 ],
                 "summary": "Update an existing subscription status",
                 "parameters": [
@@ -512,7 +512,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User Routes"
+                    "Subscription Routes"
                 ],
                 "summary": "Get a list of subscriptions based on category id",
                 "parameters": [
@@ -570,7 +570,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User Routes"
+                    "Subscription Routes"
                 ],
                 "summary": "Update an existing subscription",
                 "parameters": [
@@ -638,7 +638,7 @@ const docTemplate = `{
                 ],
                 "description": "User route to delete a subscription for the logged-in user",
                 "tags": [
-                    "User Routes"
+                    "Subscription Routes"
                 ],
                 "summary": "Delete a subscription based on its id",
                 "parameters": [

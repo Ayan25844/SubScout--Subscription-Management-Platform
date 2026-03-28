@@ -294,7 +294,7 @@ paths:
       - Bearer: []
       summary: Get the list of all categories
       tags:
-      - User Routes
+      - Category Routes
     post:
       consumes:
       - application/json
@@ -420,7 +420,7 @@ paths:
       - Bearer: []
       summary: Get a list of all subscriptions
       tags:
-      - User Routes
+      - Subscription Routes
     post:
       consumes:
       - application/json
@@ -459,7 +459,7 @@ paths:
       - Bearer: []
       summary: Create a new subscription
       tags:
-      - User Routes
+      - Subscription Routes
   /subscriptions/{categoryID}:
     get:
       description: User route to get a list of all subscriptions for the logged-in
@@ -495,7 +495,7 @@ paths:
       - Bearer: []
       summary: Get a list of subscriptions based on category id
       tags:
-      - User Routes
+      - Subscription Routes
   /subscriptions/{id}:
     delete:
       description: User route to delete a subscription for the logged-in user
@@ -524,7 +524,7 @@ paths:
       - Bearer: []
       summary: Delete a subscription based on its id
       tags:
-      - User Routes
+      - Subscription Routes
     put:
       consumes:
       - application/json
@@ -572,7 +572,7 @@ paths:
       - Bearer: []
       summary: Update an existing subscription
       tags:
-      - User Routes
+      - Subscription Routes
   /subscriptions/status/{id}:
     put:
       consumes:
@@ -617,7 +617,7 @@ paths:
       - Bearer: []
       summary: Update an existing subscription status
       tags:
-      - User Routes
+      - Subscription Routes
   /users/me:
     put:
       consumes:

@@ -24,7 +24,7 @@ type SubscriptionHandler struct {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Tags User Routes
+// @Tags Subscription Routes
 // @Router /subscriptions [post]
 // @Summary Create a new subscription
 // @Failure 400 {string} string "Invalid input"
@@ -99,7 +99,7 @@ func (h *SubscriptionHandler) CreateSubscription(w http.ResponseWriter, r *http.
 
 // @Produce json
 // @Security Bearer
-// @Tags User Routes
+// @Tags Subscription Routes
 // @Router /subscriptions [get]
 // @Summary Get a list of all subscriptions
 // @Failure 500 {string} string "Internal server error"
@@ -147,7 +147,7 @@ func (h *SubscriptionHandler) GetSubscriptions(w http.ResponseWriter, r *http.Re
 
 // @Produce json
 // @Security Bearer
-// @Tags User Routes
+// @Tags Subscription Routes
 // @Router /subscriptions/{categoryID} [get]
 // @Param categoryID path string true "Category ID"
 // @Failure 500 {string} string "Internal server error"
@@ -202,7 +202,7 @@ func (h *SubscriptionHandler) GetSubscriptionsCategoryID(w http.ResponseWriter, 
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Tags User Routes
+// @Tags Subscription Routes
 // @Router /subscriptions/{id} [put]
 // @Summary Update an existing subscription
 // @Failure 400 {string} string "Invalid input"
@@ -288,7 +288,7 @@ func (h *SubscriptionHandler) UpdateSubscription(w http.ResponseWriter, r *http.
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Tags User Routes
+// @Tags Subscription Routes
 // @Router /subscriptions/status/{id} [put]
 // @Failure 400 {string} string "Invalid input"
 // @Param id path string true "Subscription ID"
@@ -346,7 +346,7 @@ func (h *SubscriptionHandler) UpdateSubscriptionStatus(w http.ResponseWriter, r 
 }
 
 // @Security Bearer
-// @Tags User Routes
+// @Tags Subscription Routes
 // @Success 204 "No Content"
 // @Router /subscriptions/{id} [delete]
 // @Param id path string true "Subscription ID"
@@ -425,7 +425,7 @@ func (h *SubscriptionHandler) CreateCategory(w http.ResponseWriter, r *http.Requ
 
 // @Produce json
 // @Security Bearer
-// @Tags User Routes
+// @Tags Category Routes
 // @Router /categories [get]
 // @Summary Get the list of all categories
 // @Failure 404 {string} string "No categories found"
