@@ -148,7 +148,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT id, password_hash, role FROM users WHERE email = $1`
 	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Email).Scan(&id, &dbHash, &role)
 	if errQuery != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Invalid email or password", http.StatusInternalServerError)
 		return
 	}
 	if !auth.CheckPasswordHash(*req.Password, dbHash) {
