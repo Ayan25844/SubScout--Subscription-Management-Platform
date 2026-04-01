@@ -33,6 +33,7 @@ func RegisterRoutes(db *database.Service) http.Handler {
 
 	r.Route("/api/v1", func(r chi.Router) {
 
+		r.Get("/currencies", authHandler.GetCurrencies)
 		r.Post("/auth/register", authHandler.Register)
 		r.Post("/auth/login", authHandler.Login)
 
@@ -45,7 +46,6 @@ func RegisterRoutes(db *database.Service) http.Handler {
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware)
 			r.Get("/categories", subHandler.GetCategories)
-			r.Get("/currencies", authHandler.GetCurrencies)
 			r.Put("/users/me", authHandler.UpdateProfile)
 			r.Put("/users/me/password", authHandler.UpdatePassword)
 			r.Delete("/users/me/delete", authHandler.DeleteAccount)
