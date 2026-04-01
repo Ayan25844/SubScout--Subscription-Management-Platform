@@ -394,12 +394,12 @@ func (h *SubscriptionHandler) DeleteSubscription(w http.ResponseWriter, r *http.
 func (h *SubscriptionHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
 	var req dto.Category_DTO
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	if errMsg := validator.ValidateRequiredString(req.Name, "Category name", false); errMsg != "" {
-		http.Error(w, errMsg, http.StatusBadRequest)
+	if errName := validator.ValidateRequiredString(req.Name, "Category name", false); errName != "" {
+		http.Error(w, errName, http.StatusBadRequest)
 		return
 	}
 	var category models.Category
@@ -407,11 +407,11 @@ func (h *SubscriptionHandler) CreateCategory(w http.ResponseWriter, r *http.Requ
 	defer cancel()
 	query := `INSERT INTO categories (name, created_by, updated_by) VALUES ($1, $2, $3) RETURNING id, name, created_by, 
 	updated_by, created_at, updated_at`
-	err := h.DB.Pool.QueryRow(ctx, query, req.Name, claims.UserID, claims.UserID).Scan(&category.ID, &category.Name,
+	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Name, claims.UserID, claims.UserID).Scan(&category.ID, &category.Name,
 		&category.CreatedBy, &category.UpdatedBy, &category.CreatedAt, &category.UpdatedAt)
-	if err != nil {
+	if errQuery != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		if errors.As(errQuery, &pgErr) && pgErr.Code == "23505" {
 			http.Error(w, "Category already exists", http.StatusConflict)
 			return
 		}
