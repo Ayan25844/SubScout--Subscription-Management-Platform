@@ -90,7 +90,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/User_DTO"
+                            "$ref": "#/definitions/Register"
                         }
                     }
                 ],
@@ -191,7 +191,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Category_DTO"
+                            "$ref": "#/definitions/Create_Category"
                         }
                     }
                 ],
@@ -267,7 +267,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Category_DTO"
+                            "$ref": "#/definitions/Update_Category"
                         }
                     }
                 ],
@@ -705,6 +705,36 @@
             }
         },
         "/users/me": {
+            "get": {
+                "description": "User route to get current user profile",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Routes"
+                ],
+                "summary": "Get current user profile",
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized: Missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -729,7 +759,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Update_User_Profile"
+                            "$ref": "#/definitions/Update_Profile"
                         }
                     }
                 ],
@@ -829,7 +859,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Update_User_Password"
+                            "$ref": "#/definitions/Update_Password"
                         }
                     }
                 ],
@@ -895,7 +925,7 @@
                 }
             }
         },
-        "Category_DTO": {
+        "Create_Category": {
             "type": "object",
             "required": [
                 "name"
@@ -928,6 +958,28 @@
                 "password"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "xyz@gmail.com"
+                },
+                "password": {
+                    "type": "string",
+                    "format": "password"
+                }
+            }
+        },
+        "Register": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "currency_id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "email": {
                     "type": "string",
                     "format": "email",
@@ -1032,16 +1084,16 @@
                 }
             }
         },
-        "Update_Subscription_Status": {
+        "Update_Category": {
             "type": "object",
             "properties": {
-                "status": {
+                "name": {
                     "type": "string",
-                    "example": "active"
+                    "example": "Cloud"
                 }
             }
         },
-        "Update_User_Password": {
+        "Update_Password": {
             "type": "object",
             "properties": {
                 "new_password": {
@@ -1054,7 +1106,7 @@
                 }
             }
         },
-        "Update_User_Profile": {
+        "Update_Profile": {
             "type": "object",
             "properties": {
                 "currency_id": {
@@ -1065,6 +1117,15 @@
                     "type": "string",
                     "format": "email",
                     "example": "xyz@gmail.com"
+                }
+            }
+        },
+        "Update_Subscription_Status": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "active"
                 }
             }
         },
@@ -1098,28 +1159,6 @@
                     "type": "string",
                     "format": "date-time",
                     "example": "2026-03-09T12:00:00Z"
-                }
-            }
-        },
-        "User_DTO": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "currency_id": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "xyz@gmail.com"
-                },
-                "password": {
-                    "type": "string",
-                    "format": "password"
                 }
             }
         }

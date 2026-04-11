@@ -96,7 +96,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/User_DTO"
+                            "$ref": "#/definitions/Register"
                         }
                     }
                 ],
@@ -197,7 +197,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Category_DTO"
+                            "$ref": "#/definitions/Create_Category"
                         }
                     }
                 ],
@@ -273,7 +273,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Category_DTO"
+                            "$ref": "#/definitions/Update_Category"
                         }
                     }
                 ],
@@ -711,6 +711,36 @@ const docTemplate = `{
             }
         },
         "/users/me": {
+            "get": {
+                "description": "User route to get current user profile",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Routes"
+                ],
+                "summary": "Get current user profile",
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized: Missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -735,7 +765,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Update_User_Profile"
+                            "$ref": "#/definitions/Update_Profile"
                         }
                     }
                 ],
@@ -835,7 +865,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Update_User_Password"
+                            "$ref": "#/definitions/Update_Password"
                         }
                     }
                 ],
@@ -901,7 +931,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Category_DTO": {
+        "Create_Category": {
             "type": "object",
             "required": [
                 "name"
@@ -934,6 +964,28 @@ const docTemplate = `{
                 "password"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "xyz@gmail.com"
+                },
+                "password": {
+                    "type": "string",
+                    "format": "password"
+                }
+            }
+        },
+        "Register": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "currency_id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
                 "email": {
                     "type": "string",
                     "format": "email",
@@ -1038,16 +1090,16 @@ const docTemplate = `{
                 }
             }
         },
-        "Update_Subscription_Status": {
+        "Update_Category": {
             "type": "object",
             "properties": {
-                "status": {
+                "name": {
                     "type": "string",
-                    "example": "active"
+                    "example": "Cloud"
                 }
             }
         },
-        "Update_User_Password": {
+        "Update_Password": {
             "type": "object",
             "properties": {
                 "new_password": {
@@ -1060,7 +1112,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Update_User_Profile": {
+        "Update_Profile": {
             "type": "object",
             "properties": {
                 "currency_id": {
@@ -1071,6 +1123,15 @@ const docTemplate = `{
                     "type": "string",
                     "format": "email",
                     "example": "xyz@gmail.com"
+                }
+            }
+        },
+        "Update_Subscription_Status": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "active"
                 }
             }
         },
@@ -1104,28 +1165,6 @@ const docTemplate = `{
                     "type": "string",
                     "format": "date-time",
                     "example": "2026-03-09T12:00:00Z"
-                }
-            }
-        },
-        "User_DTO": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "currency_id": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "xyz@gmail.com"
-                },
-                "password": {
-                    "type": "string",
-                    "format": "password"
                 }
             }
         }

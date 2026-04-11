@@ -24,7 +24,7 @@ definitions:
         format: uuid
         type: string
     type: object
-  Category_DTO:
+  Create_Category:
     properties:
       name:
         example: Cloud
@@ -44,6 +44,22 @@ definitions:
     type: object
   Login:
     properties:
+      email:
+        example: xyz@gmail.com
+        format: email
+        type: string
+      password:
+        format: password
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  Register:
+    properties:
+      currency_id:
+        format: uuid
+        type: string
       email:
         example: xyz@gmail.com
         format: email
@@ -126,13 +142,13 @@ definitions:
     - next_billing_date
     - service_name
     type: object
-  Update_Subscription_Status:
+  Update_Category:
     properties:
-      status:
-        example: active
+      name:
+        example: Cloud
         type: string
     type: object
-  Update_User_Password:
+  Update_Password:
     properties:
       new_password:
         format: password
@@ -141,7 +157,7 @@ definitions:
         format: password
         type: string
     type: object
-  Update_User_Profile:
+  Update_Profile:
     properties:
       currency_id:
         format: uuid
@@ -149,6 +165,12 @@ definitions:
       email:
         example: xyz@gmail.com
         format: email
+        type: string
+    type: object
+  Update_Subscription_Status:
+    properties:
+      status:
+        example: active
         type: string
     type: object
   User:
@@ -175,22 +197,6 @@ definitions:
         example: "2026-03-09T12:00:00Z"
         format: date-time
         type: string
-    type: object
-  User_DTO:
-    properties:
-      currency_id:
-        format: uuid
-        type: string
-      email:
-        example: xyz@gmail.com
-        format: email
-        type: string
-      password:
-        format: password
-        type: string
-    required:
-    - email
-    - password
     type: object
 host: localhost:8080
 info:
@@ -253,7 +259,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/User_DTO'
+          $ref: '#/definitions/Register'
       produces:
       - application/json
       responses:
@@ -315,7 +321,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/Category_DTO'
+          $ref: '#/definitions/Create_Category'
       produces:
       - application/json
       responses:
@@ -364,7 +370,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/Category_DTO'
+          $ref: '#/definitions/Update_Category'
       produces:
       - application/json
       responses:
@@ -652,6 +658,26 @@ paths:
       tags:
       - Subscription Routes
   /users/me:
+    get:
+      description: User route to get current user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          schema:
+            $ref: '#/definitions/User'
+        "401":
+          description: 'Unauthorized: Missing token'
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get current user profile
+      tags:
+      - User Routes
     put:
       consumes:
       - application/json
@@ -662,7 +688,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/Update_User_Profile'
+          $ref: '#/definitions/Update_Profile'
       produces:
       - application/json
       responses:
@@ -725,7 +751,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/Update_User_Password'
+          $ref: '#/definitions/Update_Password'
       produces:
       - application/json
       responses:
