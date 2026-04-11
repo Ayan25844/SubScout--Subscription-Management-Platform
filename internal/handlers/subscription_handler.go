@@ -24,6 +24,52 @@ type SubscriptionHandler struct {
 // @Accept json
 // @Produce json
 // @Security Bearer
+// @Tags Admin Routes
+// @Router /categories [post]
+// @Summary Create a new category
+// @Failure 400 {string} string "Invalid input"
+// @Failure 500 {string} string "Internal server error"
+// @Failure 409 {string} string "Category already exists"
+// @Failure 401 {string} string "Unauthorized: Missing token"
+// @Param request body dto.Create_Category true "Category Name"
+// @Description Admin route to create a unique subscription category
+// @Failure 403 {string} string "Forbidden - Insufficient Permissions"
+// @Success 201 {object} models.Category "Category created successfully"
+func (h *SubscriptionHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
+	var req dto.Create_Category
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+	if errName := validator.ValidateRequiredString(req.Name, "Category name", false); errName != "" {
+		http.Error(w, errName, http.StatusBadRequest)
+		return
+	}
+	var category models.Category
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	query := `INSERT INTO categories (name, created_by, updated_by) VALUES ($1, $2, $3) RETURNING id, name, created_by, 
+	updated_by, created_at, updated_at`
+	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Name, claims.UserID, claims.UserID).Scan(&category.ID, &category.Name,
+		&category.CreatedBy, &category.UpdatedBy, &category.CreatedAt, &category.UpdatedAt)
+	if errQuery != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(errQuery, &pgErr) && pgErr.Code == "23505" {
+			http.Error(w, "Category already exists", http.StatusConflict)
+			return
+		}
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(category)
+}
+
+// @Accept json
+// @Produce json
+// @Security Bearer
 // @Tags Subscription Routes
 // @Router /subscriptions [post]
 // @Summary Create a new subscription
@@ -95,6 +141,47 @@ func (h *SubscriptionHandler) CreateSubscription(w http.ResponseWriter, r *http.
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sub)
+}
+
+// @Produce json
+// @Security Bearer
+// @Tags User Routes
+// @Router /categories [get]
+// @Summary Get the list of all categories
+// @Failure 404 {string} string "No categories found"
+// @Failure 500 {string} string "Internal server error"
+// @Description User route to get a list of all categories
+// @Failure 401 {string} string "Unauthorized: Missing token"
+// @Success 200 {array} models.Category "List of categories retrieved successfully"
+func (h *SubscriptionHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	query := `SELECT id, name, created_by, updated_by, created_at, updated_at FROM categories`
+	rows, err := h.DB.Pool.Query(ctx, query)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	var categories []models.Category
+	for rows.Next() {
+		var c models.Category
+		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedBy, &c.UpdatedBy, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		categories = append(categories, c)
+	}
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if len(categories) == 0 {
+		http.Error(w, "No categories found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(categories)
 }
 
 // @Produce json
@@ -197,6 +284,63 @@ func (h *SubscriptionHandler) GetSubscriptionsCategoryID(w http.ResponseWriter, 
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(subs)
+}
+
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Tags Admin Routes
+// @Router /categories/{id} [put]
+// @Summary Update the name of a category
+// @Param id path string true "Category ID"
+// @Failure 400 {string} string "Invalid input"
+// @Description Admin route to rename a category
+// @Failure 404 {string} string "Category not found"
+// @Failure 500 {string} string "Internal server error"
+// @Failure 409 {string} string "Category already exists"
+// @Failure 401 {string} string "Unauthorized: Missing token"
+// @Param request body dto.Update_Category true "Renamed category"
+// @Failure 403 {string} string "Forbidden: Insufficient Permissions"
+// @Success 200 {object} models.Category "Category updated successfully"
+func (h *SubscriptionHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
+	categoryID := chi.URLParam(r, "id")
+	if errID := validator.IsValidUUID(&categoryID, "Category ID"); errID != "" {
+		http.Error(w, errID, http.StatusBadRequest)
+		return
+	}
+	var req dto.Update_Category
+	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+	if errName := validator.ValidateRequiredString(req.Name, "Category Name", true); errName != "" {
+		http.Error(w, errName, http.StatusBadRequest)
+		return
+	}
+	var updatedCategory models.Category
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	query := `UPDATE categories SET name = COALESCE($1, name), updated_by = $2 , updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, 
+	name, created_by, updated_by, created_at, updated_at`
+	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Name, claims.UserID, categoryID).Scan(&updatedCategory.ID,
+		&updatedCategory.Name, &updatedCategory.CreatedBy, &updatedCategory.UpdatedBy, &updatedCategory.CreatedAt,
+		&updatedCategory.UpdatedAt)
+	if errQuery != nil {
+		if errors.Is(errQuery, pgx.ErrNoRows) {
+			http.Error(w, "Category not found", http.StatusNotFound)
+			return
+		}
+		var pgErr *pgconn.PgError
+		if errors.As(errQuery, &pgErr) && pgErr.Code == "23505" {
+			http.Error(w, "Category already exists", http.StatusConflict)
+			return
+		}
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedCategory)
 }
 
 // @Accept json
@@ -375,148 +519,4 @@ func (h *SubscriptionHandler) DeleteSubscription(w http.ResponseWriter, r *http.
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Tags Admin Routes
-// @Router /categories [post]
-// @Summary Create a new category
-// @Failure 400 {string} string "Invalid input"
-// @Failure 500 {string} string "Internal server error"
-// @Failure 409 {string} string "Category already exists"
-// @Param request body dto.Category_DTO true "Category Name"
-// @Failure 401 {string} string "Unauthorized: Missing token"
-// @Description Admin route to create a unique subscription category
-// @Failure 403 {string} string "Forbidden - Insufficient Permissions"
-// @Success 201 {object} models.Category "Category created successfully"
-func (h *SubscriptionHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
-	var req dto.Category_DTO
-	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-	if errName := validator.ValidateRequiredString(req.Name, "Category name", false); errName != "" {
-		http.Error(w, errName, http.StatusBadRequest)
-		return
-	}
-	var category models.Category
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	query := `INSERT INTO categories (name, created_by, updated_by) VALUES ($1, $2, $3) RETURNING id, name, created_by, 
-	updated_by, created_at, updated_at`
-	errQuery := h.DB.Pool.QueryRow(ctx, query, req.Name, claims.UserID, claims.UserID).Scan(&category.ID, &category.Name,
-		&category.CreatedBy, &category.UpdatedBy, &category.CreatedAt, &category.UpdatedAt)
-	if errQuery != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(errQuery, &pgErr) && pgErr.Code == "23505" {
-			http.Error(w, "Category already exists", http.StatusConflict)
-			return
-		}
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(category)
-}
-
-// @Produce json
-// @Security Bearer
-// @Tags User Routes
-// @Router /categories [get]
-// @Summary Get the list of all categories
-// @Failure 404 {string} string "No categories found"
-// @Failure 500 {string} string "Internal server error"
-// @Description User route to get a list of all categories
-// @Failure 401 {string} string "Unauthorized: Missing token"
-// @Success 200 {array} models.Category "List of categories retrieved successfully"
-func (h *SubscriptionHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	query := `SELECT id, name, created_by, updated_by, created_at, updated_at FROM categories`
-	rows, err := h.DB.Pool.Query(ctx, query)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	var categories []models.Category
-	for rows.Next() {
-		var c models.Category
-		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedBy, &c.UpdatedBy, &c.CreatedAt, &c.UpdatedAt); err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		categories = append(categories, c)
-	}
-	if err := rows.Err(); err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	if len(categories) == 0 {
-		http.Error(w, "No categories found", http.StatusNotFound)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(categories)
-}
-
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Tags Admin Routes
-// @Router /categories/{id} [put]
-// @Summary Update the name of a category
-// @Param id path string true "Category ID"
-// @Failure 400 {string} string "Invalid input"
-// @Description Admin route to rename a category
-// @Failure 404 {string} string "Category not found"
-// @Failure 500 {string} string "Internal server error"
-// @Failure 409 {string} string "Category already exists"
-// @Failure 401 {string} string "Unauthorized: Missing token"
-// @Param request body dto.Category_DTO true "Renamed category"
-// @Failure 403 {string} string "Forbidden: Insufficient Permissions"
-// @Success 200 {object} models.Category "Category updated successfully"
-func (h *SubscriptionHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
-	categoryID := chi.URLParam(r, "id")
-	if errID := validator.IsValidUUID(&categoryID, "Category ID"); errID != "" {
-		http.Error(w, errID, http.StatusBadRequest)
-		return
-	}
-	var req dto.Category_DTO
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-	if errMsg := validator.ValidateRequiredString(req.Name, "Category Name", true); errMsg != "" {
-		http.Error(w, errMsg, http.StatusBadRequest)
-		return
-	}
-	var updatedCategory models.Category
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	query := `UPDATE categories SET name = COALESCE($1, name), updated_by = $2 , updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, 
-	name, created_by, updated_by, created_at, updated_at`
-	err := h.DB.Pool.QueryRow(ctx, query, req.Name, claims.UserID, categoryID).Scan(&updatedCategory.ID,
-		&updatedCategory.Name, &updatedCategory.CreatedBy, &updatedCategory.UpdatedBy, &updatedCategory.CreatedAt,
-		&updatedCategory.UpdatedAt)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			http.Error(w, "Category not found", http.StatusNotFound)
-			return
-		}
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			http.Error(w, "Category already exists", http.StatusConflict)
-			return
-		}
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedCategory)
 }

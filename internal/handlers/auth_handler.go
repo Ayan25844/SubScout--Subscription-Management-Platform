@@ -64,12 +64,12 @@ func (h *AuthHandler) GetCurrencies(w http.ResponseWriter, r *http.Request) {
 // @Summary Register a new user account
 // @Failure 400 {string} string "Invalid input"
 // @Description Public route to create a user account
-// @Param request body dto.User_DTO true "New Account"
+// @Param request body dto.Register true "New Account"
 // @Failure 500 {string} string "Internal server error"
 // @Failure 409 {string} string "Email id already exists"
 // @Success 201 {string} string "User account created successfully"
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req dto.User_DTO
+	var req dto.Register
 	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
@@ -167,6 +167,34 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Produce json
+// @Tags User Routes
+// @Router /users/me [get]
+// @Summary Get current user profile
+// @Failure 500 {string} string "Internal server error"
+// @Description User route to get current user profile
+// @Failure 401 {string} string "Unauthorized: Missing token"
+// @Success 200 {object} models.User "User profile retrieved successfully"
+func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
+
+	var profile models.User
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	query := `SELECT id, role, currency_id, email, created_at, updated_at FROM users WHERE id = $1`
+	errQuery := h.DB.Pool.QueryRow(ctx, query, claims.UserID).
+		Scan(&profile.ID, &profile.Role, &profile.CurrencyID, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt)
+
+	if errQuery != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(profile)
+}
+
 // @Accept json
 // @Produce json
 // @Security Bearer
@@ -179,10 +207,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 409 {string} string "Email id already exists"
 // @Failure 401 {string} string "Unauthorized: Missing token"
 // @Success 200 {object} models.User "User profile updated successfully"
-// @Param request body dto.Update_User_Profile true "Updated user profile"
+// @Param request body dto.Update_Profile true "Updated user profile"
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
-	var req dto.Update_User_Profile
+	var req dto.Update_Profile
 	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
@@ -231,10 +259,10 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal server error"
 // @Failure 401 {string} string "Unauthorized: Missing token"
 // @Success 200 {string} string "User password updated successfully"
-// @Param request body dto.Update_User_Password true "Updated user password"
+// @Param request body dto.Update_Password true "Updated user password"
 func (h *AuthHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(*middleware.CustomClaims)
-	var req dto.Update_User_Password
+	var req dto.Update_Password
 	if errDecode := json.NewDecoder(r.Body).Decode(&req); errDecode != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return

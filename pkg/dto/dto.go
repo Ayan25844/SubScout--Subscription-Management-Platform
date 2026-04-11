@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type User_DTO struct {
+type Register struct {
 	CurrencyID *uuid.UUID `json:"currency_id" swaggertype:"string" format:"uuid"`
 	Password   *string    `json:"password" swaggertype:"string" format:"password" validate:"required"`
 	Email      *string    `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com" validate:"required"`
@@ -17,7 +17,7 @@ type Login struct {
 	Email    *string `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com" validate:"required"`
 }
 
-type Category_DTO struct {
+type Create_Category struct {
 	Name *string `json:"name" swaggertype:"string" example:"Cloud" validate:"required"`
 }
 
@@ -30,16 +30,20 @@ type Subscription_DTO struct {
 	TrialEndDate    *time.Time `json:"trial_end_date,omitempty" swaggertype:"string" format:"date-time" example:"2026-03-09T12:00:00Z"`
 }
 
-type Update_Subscription_Status struct {
-	Status *string `json:"status" swaggertype:"string" example:"active"`
-}
-
-type Update_User_Profile struct {
+type Update_Profile struct {
 	CurrencyID *uuid.UUID `json:"currency_id" swaggertype:"string" format:"uuid"`
 	Email      *string    `json:"email" swaggertype:"string" format:"email" example:"xyz@gmail.com"`
 }
 
-type Update_User_Password struct {
+type Update_Password struct {
 	OldPassword *string `json:"old_password" swaggertype:"string" format:"password"`
 	NewPassword *string `json:"new_password" swaggertype:"string" format:"password"`
+}
+
+type Update_Category struct {
+	Name *string `json:"name" swaggertype:"string" example:"Cloud"`
+}
+
+type Update_Subscription_Status struct {
+	Status *string `json:"status" swaggertype:"string" example:"active"`
 }
